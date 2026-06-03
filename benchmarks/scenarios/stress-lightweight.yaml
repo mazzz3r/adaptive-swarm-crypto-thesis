@@ -1,0 +1,18 @@
+name: stress-lightweight
+mode: static-lightweight
+duration_s: 10
+message_rate_hz: 80
+message_size_bytes: 65536
+peer_count: 2
+network:
+  delay_ms: 0
+  jitter_ms: 0
+  loss_pct: 0
+threat_schedule:
+  - at_s: 0
+    value: 0.1
+energy_schedule:
+  - at_s: 0
+    value: 0.1
+rekey_interval_s: 2
+tags: ["stress", "performance"]

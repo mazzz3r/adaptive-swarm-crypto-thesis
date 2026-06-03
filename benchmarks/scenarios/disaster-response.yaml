@@ -1,0 +1,22 @@
+name: disaster-response
+mode: adaptive
+duration_s: 25
+message_rate_hz: 10
+message_size_bytes: 640
+peer_count: 4
+network:
+  delay_ms: 18
+  jitter_ms: 6
+  loss_pct: 2
+threat_schedule:
+  - at_s: 0
+    value: 0.3
+  - at_s: 10
+    value: 0.85
+energy_schedule:
+  - at_s: 0
+    value: 0.8
+  - at_s: 15
+    value: 0.45
+rekey_interval_s: 8
+tags: ["thesis", "disaster-response"]

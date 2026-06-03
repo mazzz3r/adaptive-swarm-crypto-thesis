@@ -1,0 +1,112 @@
+\chapter{Comparative Analysis of Baseline Protocols}
+\label{chap:comparison}
+
+\section{Analysis of ECC-Based Key Exchange}
+\label{sec:ecc_key_exchange}
+
+Elliptic Curve Diffie--Hellman (ECDH) establishes a shared secret without prior key distribution and is the key-establishment primitive used throughout this thesis. The prototype uses the X25519 function standardized for Diffie--Hellman use over Curve25519~\cite{rfc7748}. Agent $v_i$ generates a private key $d_i$, chosen uniformly at random from the interval $[1, n-1]$, where $n$ denotes the order of the elliptic-curve group. The corresponding public key is computed as
+\begin{equation}
+Q_i = d_i \cdot G,
+\label{eq:ecdh_public_key}
+\end{equation}
+where $G$ is the base point of the curve and $\cdot$ denotes elliptic-curve scalar multiplication.
+Agent $v_j$ analogously generates $(d_j, Q_j)$. During public key exchange, $v_i$ sends $Q_i$ to $v_j$, and $v_j$ sends $Q_j$ to $v_i$. The shared secret is then computed as
+\[
+K = d_i \cdot Q_j \quad \text{by } v_i, \qquad
+K = d_j \cdot Q_i \quad \text{by } v_j.
+\]
+Due to commutativity, both computations yield the identical value $K = d_i d_j \cdot G$.
+
+The computational cost of ECDH is dominated by elliptic-curve scalar multiplication, so it is expensive relative to symmetric cryptography but acceptable for periodic setup and rekeying. Memory and energy costs scale with the number of neighbors, which is why ECDH is used for session establishment rather than per-message protection. Its security rests on the hardness of ECDLP; forward secrecy is obtained only when the exchanged key material is ephemeral or refreshed per session/epoch. Authenticated, group, and threshold variants are useful for specific deployment constraints, but they do not change ECDH's role as the setup primitive.
+
+
+\section{Symmetric Encryption Schemes}
+\label{sec:symmetric_encryption}
+
+AES-GCM and ChaCha20-Poly1305 are the symmetric primitives used for bulk payload protection once a shared secret exists. AES is standardized with 128-, 192-, and 256-bit key sizes~\cite{nistFips197AES}, and GCM is the NIST-specified authenticated-encryption mode used by the heavy and balanced profiles~\cite{nistSP80038DGCM}. ChaCha20-Poly1305 is specified for IETF protocols and is a practical software-oriented AEAD alternative~\cite{rfc8439}. AES-GCM is preferred when hardware acceleration is available; ChaCha20-Poly1305 is preferred on software-only microcontrollers. Both provide confidentiality and integrity with a 96-bit nonce and a 128-bit tag. In the thesis architecture, these ciphers are paired with ECDH-derived session keys and periodic rotation, which keeps asymmetric operations off the per-message path.
+
+
+\section{Token-Based Authentication}
+\label{sec:token_auth}
+
+Hash-chain schemes provide lightweight authentication through a precomputed sequence of hash values. An agent generates an initial random seed $s_0$ and iteratively applies a cryptographic hash function $H$:
+\begin{equation}
+s_1 = H(s_0),\; s_2 = H(s_1),\; \ldots,\; s_L = H(s_{L-1}).
+\label{eq:hash_chain}
+\end{equation}
+The final hash $s_L$ is published as a commitment, while the tokens $s_{L-1}, s_{L-2}, \ldots, s_0$ are used sequentially for authentication. Upon receiving a token $s_i$, the verifier computes $H(s_i)$ and compares it with the previously accepted token $s_{i+1}$ or with the commitment; a match confirms authenticity. The one-wayness of the hash function prevents efficient recovery of previous chain elements from later ones, but this property should not be conflated with full channel-level forward secrecy. Runtime cost is low because token generation and token verification require only hash evaluations, while communication overhead is limited to the transmitted token itself~\cite{manikandanASMTPAnonymousSecureMessaging2024}.
+
+The Anonymous Secure Messaging Token-Based Protocol (ASMTP) extends hash-chain authentication for UAV swarms by attaching a token to each message instead of an explicit identifier. The receiver verifies the token without learning the sender’s identity, which makes the scheme attractive for lightweight telemetry and control traffic. Its main limitation is synchronization: packet loss can desynchronize sender and receiver, so the protocol must either include the token index or periodically reinitialize the chain. The prototype in this thesis uses a simpler sequence-bound hash token inspired by this lightweight-authentication family, not the full ASMTP disclosure protocol. The additional latency and energy of token-style checks are negligible compared to radio transmission, while communication overhead is just the token itself.
+
+Synchronization issues represent a practical challenge for hash-chain schemes. Packet loss may desynchronize the receiver, which expects token $s_i$ but receives $s_{i-k}$. One solution is to include the index $i$ in the message, enabling verification by computing
+\begin{equation}
+H^{k}(s_{i-k}) = s_i,
+\label{eq:hash_resync}
+\end{equation}
+where $H^{k}$ denotes $k$ successive applications of the hash function. The cost of this approach is partial disclosure of the chain position and potential predictability of future indices. Alternative solutions include maintaining backup chains or periodically regenerating chains after exhaustion or compromise.
+
+
+\section{Complexity and Performance Comparison}
+\label{sec:complexity_comparison}
+
+Comparative tables integrate the main trade-offs across the three protocol categories. ECDH is the costliest primitive but provides key establishment and forward secrecy; AES-GCM and ChaCha20-Poly1305 are efficient for payload protection once keys exist; and hash-chain authentication is the lightest option for frequent verification. HMAC remains the conventional keyed-hash mechanism for additional message authentication in the heavy and balanced profiles~\cite{nistFips198HMAC}. The thesis therefore adopts a hybrid stack and applies each primitive only where it is most appropriate.
+
+\begin{landscape}
+\begin{table}[H]
+\centering
+\small
+\setlength{\tabcolsep}{5pt}
+\caption{Qualitative comparison of baseline protocol roles in the proposed architecture}
+\label{tab:protocol_comparison}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{|l|c|c|c|>{\raggedright\arraybackslash}X|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{Protocol} &
+\textbf{Setup Cost} &
+\textbf{Runtime Cost} &
+\textbf{Overhead} &
+\textbf{Primary Role} &
+\textbf{Main Limitation} \\
+\hline
+ECDH-256 &
+High &
+Not used per message &
+Public-key exchange &
+Session establishment and forward secrecy &
+Expensive to repeat frequently in dense networks \\
+\hline
+AES-128-GCM &
+Medium &
+Low with hardware support &
+Nonce + tag &
+Authenticated payload protection &
+Benefits strongly from hardware acceleration \\
+\hline
+AES-256-GCM &
+Medium--high &
+Higher than AES-128 &
+Nonce + tag &
+Maximum-strength authenticated payload protection &
+Higher compute cost than lightweight modes \\
+\hline
+ChaCha20-Poly1305 &
+Low &
+Low on software-only targets &
+Nonce + tag &
+Software-oriented authenticated encryption &
+Still depends on robust key management \\
+\hline
+Hash-chain (SHA-256) &
+Low &
+Very low verification cost &
+Token per message &
+Lightweight authentication for frequent traffic &
+Sensitive to synchronization loss \\
+\hline
+\end{tabularx}
+\end{table}
+\end{landscape}
+
+
+
+The table highlights the same conclusion in compact form: no single protocol dominates across all dimensions. ECC is essential for secure key establishment without pre-existing infrastructure; symmetric encryption provides efficient confidentiality once keys are available; and hash-chain schemes offer ultra-lightweight authentication. The optimal strategy is therefore a hybrid approach that combines these primitives and selects them adaptively based on current security requirements, network conditions, and available resources rather than relying on one fixed profile.

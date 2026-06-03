@@ -1,0 +1,17 @@
+\begin{abstract}
+This thesis develops and evaluates an adaptive lightweight secure-communication
+framework for swarm-oriented systems. The proposed architecture maps runtime
+state indicators to cryptographic profiles and uses X25519-based session
+establishment, AEAD payload protection, and lightweight runtime authentication.
+The executable evaluation focuses on a constrained pairwise prototype running in
+containers, where static-heavy, static-balanced, static-lightweight, and
+adaptive modes are compared under CPU, rekeying, and network-impairment
+conditions.
+
+The benchmark results show that lightweight mode provides the best measured
+throughput and the lowest normalized model-based energy proxy under the tested
+compute constraint, while adaptive mode correctly switches between profiles and
+acts as a policy-driven compromise rather than a universally optimal mode. The
+results are intentionally bounded: they validate data-plane behavior in a
+host-based prototype, not a complete deployed multi-hop robotic swarm.
+\end{abstract}

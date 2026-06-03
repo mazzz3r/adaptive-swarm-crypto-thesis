@@ -1,0 +1,95 @@
+\chapter{Discussion and Applications}
+\label{chap:discussion}
+
+\section{Design Guidelines}
+\label{sec:design_guidelines}
+
+The benchmarked prototype supports a limited but still useful set of design guidelines. They should be read as deployment-oriented heuristics derived from the architecture and from the pairwise benchmark evidence, not as fully field-validated prescriptions.
+
+\textbf{Scenario 1: Disaster Response.}  
+When communication reliability and energy preservation matter simultaneously, the benchmark results suggest starting from a balanced or lightweight default and reserving the heavy profile for explicitly elevated threat periods.
+
+\textbf{Scenario 2: Agricultural Robotics.}  
+Long-duration sensing missions favor lighter defaults. In the current profile set, lightweight operation minimizes the normalized energy proxy per delivered message under constrained compute and also delivers the highest measured throughput in the benchmarked sweep.
+
+\textbf{Scenario 3: Underwater or Low-Bandwidth Links.}  
+When software efficiency matters more than hardware AES acceleration, the lightweight profile remains attractive because it minimizes normalized per-message cost in the measured prototype. This is an extrapolation from the benchmark, not a dedicated underwater experiment.
+
+\textbf{Scenario 4: Adversarial UAV Operation.}  
+When threat is elevated, the heavy profile provides the strongest runtime protection among the tested modes. The practical cost of that choice is visible in the benchmark, which is precisely why adaptive switching is preferable to always-on heavy protection.
+
+\subsection*{Selection of Cryptographic Primitives}
+
+The benchmarked prototype leads to a bounded set of primitive-level recommendations. X25519-style key exchange is suitable for pairwise session establishment in the prototype. AES-GCM remains a reasonable high-security data-plane choice, especially when acceleration exists, while ChaCha20-Poly1305 remains a practical lightweight software-oriented alternative. The implemented sequence-bound hash token is useful when the implementation goal is low-overhead runtime authentication tied to a message sequence number, but it should not be interpreted as a full hash-chain protocol or as a replacement for a broader authenticated control plane.
+
+\subsection*{Decision Framework for Practitioners}
+
+A compact decision process is sufficient for the present prototype:
+
+\textbf{Step 1: identify the dominant constraint} --- compute budget, energy, or threat.
+\textbf{Step 2: choose a default profile} --- lightweight for efficiency, balanced for mixed conditions, heavy for elevated threat.
+\textbf{Step 3: define explicit switching triggers} --- threat escalation and low-energy fallback are the two implemented triggers.
+\textbf{Step 4: benchmark before deployment} --- validate profile behavior under the actual platform constraints.
+
+This procedure is simpler than the original broad framework, but it matches the behavior actually implemented and measured in the thesis.
+
+\section{Practical Applications}
+\label{sec:practical_applications}
+
+The main practical contribution of the thesis is not that one architecture has already been validated across every swarm domain. The stronger and more defensible claim is that the same profile-switching pattern can be \emph{parameterized} for different domains, while the benchmark demonstrates one concrete pairwise implementation of that idea.
+
+In that sense, disaster response, agriculture, underwater communication, and adversarial UAV operation are best treated as \emph{application sketches}. They show how the heavy, balanced, and lightweight profiles might be mapped to different mission priorities. Chapter~\ref{chap:practical_evaluation} supports these sketches in one important way: under constrained compute, lightweight delivers the highest measured throughput and the lowest-energy measured default, while adaptive switching preserves a controlled path toward stronger protection when runtime conditions worsen.
+
+\section{Limitations}
+\label{sec:limitations}
+
+The contribution of this thesis should be interpreted within the limits of both the retained formal reasoning and the benchmark implementation.
+
+\textbf{Implementation environment.}  
+The benchmark suite runs on a host system using Docker containers and gRPC peers rather than on embedded robotic hardware. Consequently, the reported latency and throughput values validate software behavior under constrained execution, but they do not directly translate to microcontrollers, radios, or full robotic platforms.
+
+\textbf{Scale of the evaluation.}  
+The measured data path uses two communicating peers. Even if scenario files describe larger peer counts, the current benchmark does not validate large-swarm effects such as multi-hop contention, neighbor churn, group reconfiguration, or consensus traffic.
+
+\textbf{Runtime inputs.}  
+Threat and energy values are scripted during the adaptive benchmark rather than inferred from real sensors or anomaly-detection models. The benchmark therefore validates the switching logic itself, not the quality of the estimator that a deployed swarm would need.
+
+\textbf{Energy reporting.}  
+Energy values in the benchmark are normalized model-based proxies rather than physical power measurements. They are suitable for relative comparison under a fixed workload, but they should not be interpreted as battery-accurate energy consumption or mission-duration predictions.
+
+\textbf{Repeated-run evidence.}
+Longer repeated benchmark runs reduce the risk that the reported ranking is caused by one transient scheduler state or one short traffic burst. They do not, however, change the experimental class of the evidence: the measurements still come from a host/container pairwise setup and still require hardware validation before being translated into deployed swarm energy or latency guarantees.
+
+\textbf{Control-plane scope.}  
+The benchmark validates the adaptive data plane, not a fully authenticated control plane. Signed bootstrap, signed updates, and larger trust-management mechanisms remain future work.
+
+\subsection*{Residual Risks}
+
+Even with the presented design, several attack classes remain relevant.
+
+\textbf{Replay attacks:} the prototype rejects duplicate sequence numbers within an epoch, but nonce reuse or loss of receiver replay state would still break protocol assumptions.
+
+\textbf{Denial-of-Service (DoS):} encrypted traffic can still force costly verification attempts and queue buildup.
+
+\textbf{Timing leakage:} constant-time primitives help, but a host-based benchmark does not constitute side-channel validation.
+
+\textbf{Topology attacks:} wormhole or routing distortion attacks are outside the scope of the pairwise prototype.
+
+\subsection*{Implications}
+
+Acknowledging these limitations is essential for responsible interpretation. The thesis provides a benchmarked adaptive pairwise prototype and a defensible architectural model, but it does not constitute a complete swarm-security solution or a substitute for field validation. Comprehensive protection still requires authenticated control-plane design, hardware studies, and realistic multi-peer experiments.
+
+\section{Future Research Directions}
+\label{sec:future_work}
+
+\subsection*{Authenticated Control Plane}
+
+The next implementation step should be explicit authentication of bootstrap and profile-update messages. That would close the largest remaining gap between the architectural design and the current benchmark prototype and connect the data plane to broader swarm trust work~\cite{chenSecuringEmergentBehaviour2021,kohliSwarmNetFirmwareAttestation2024}.
+
+\subsection*{Multi-Peer Validation}
+
+Bridging the gap between pairwise benchmarking and swarm evaluation requires a true multi-peer traffic model with neighborhood churn, asynchronous switching, and contention effects. That is the most important experimental extension of the present work, especially given the continuing gap between swarm-robotics concepts and deployed field systems~\cite{kegeleirsTowardsAppliedSwarm2025}.
+
+\subsection*{Hardware and Post-Quantum Evaluation}
+
+Future work should move the benchmark onto physical robotic or embedded platforms and later examine whether hybrid post-quantum session establishment can be added without destroying the lightweight runtime profile. Post-quantum authentication, quantum-key-distribution directions, and homomorphic-processing techniques are relevant longer-term candidates, but their cost must be measured against the constrained runtime profile rather than assumed acceptable~\cite{fathenojavanPostQuantumLatticeAnonymous2025,beraSecuringNextGenerationQuantum2025,ullahHomomorphicEncryptionApplications2025}.

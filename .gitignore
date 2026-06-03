@@ -1,0 +1,54 @@
+# Local environments and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build outputs
+build/
+dist/
+
+# LaTeX artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.bak
+
+# University/internal handouts
+Methodical_recommendations_of_complying_Thesis_with_standard_requirements.docx
+annotation*.docx
+
+# Benchmark local environments
+benchmarks/.venv/
+benchmarks/__pycache__/
+benchmarks/.pytest_cache/
+
+# Generated benchmark run artifacts. The curated final thesis matrix is kept
+# under benchmarks/thesis-report-final and is intentionally tracked.
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+benchmarks/benchmark-results/
+benchmarks/saturation-results/
+benchmarks/stress-results/
+benchmarks/sweep-verification/
+benchmarks/thesis-report/
+benchmarks/tmp-results/
+benchmarks/verification-results/

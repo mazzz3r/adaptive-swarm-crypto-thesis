@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+package bench;
+
+enum BenchmarkMode {
+  MODE_UNSPECIFIED = 0;
+  STATIC_HEAVY = 1;
+  STATIC_BALANCED = 2;
+  STATIC_LIGHTWEIGHT = 3;
+  ADAPTIVE = 4;
+}
+
+enum RuntimeProfile {
+  PROFILE_UNSPECIFIED = 0;
+  HEAVY = 1;
+  BALANCED = 2;
+  LIGHTWEIGHT = 3;
+}
+
+message ScheduledValue {
+  double at_s = 1;
+  double value = 2;
+}
+
+message NetworkProfile {
+  double delay_ms = 1;
+  double jitter_ms = 2;
+  double loss_pct = 3;
+}
+
+message ScenarioConfig {
+  string name = 1;
+  BenchmarkMode mode = 2;
+  double duration_s = 3;
+  double message_rate_hz = 4;
+  uint32 message_size_bytes = 5;
+  uint32 peer_count = 6;
+  NetworkProfile network = 7;
+  repeated ScheduledValue threat_schedule = 8;
+  repeated ScheduledValue energy_schedule = 9;
+  double rekey_interval_s = 10;
+  repeated string tags = 11;
+}
+
+message BootstrapRequest {
+  string peer_name = 1;
+  BenchmarkMode mode = 2;
+  double rekey_interval_s = 3;
+}
+
+message BootstrapResponse {
+  bool ok = 1;
+  string message = 2;
+  string peer_name = 3;
+}
+
+message ConnectPeerRequest {
+  string remote_name = 1;
+  string remote_host = 2;
+  uint32 remote_port = 3;
+  BenchmarkMode mode = 4;
+}
+
+message ConnectPeerResponse {
+  bool ok = 1;
+  string message = 2;
+  double bootstrap_ms = 3;
+}
+
+message StartScenarioRequest {
+  ScenarioConfig scenario = 1;
+  string target_name = 2;
+  string target_host = 3;
+  uint32 target_port = 4;
+}
+
+message StartScenarioResponse {
+  bool accepted = 1;
+  string message = 2;
+}
+
+message StopScenarioRequest {}
+
+message StopScenarioResponse {
+  bool stopped = 1;
+  string message = 2;
+}
+
+message GetMetricsRequest {}
+
+message ModeSwitch {
+  double at_s = 1;
+  RuntimeProfile profile = 2;
+  string reason = 3;
+}
+
+message MetricsResponse {
+  bool active = 1;
+  string peer_name = 2;
+  uint64 messages_attempted = 3;
+  uint64 messages_sent = 4;
+  uint64 messages_received = 5;
+  uint64 send_errors = 6;
+  repeated double latencies_ms = 7;
+  repeated ModeSwitch mode_switches = 8;
+  uint64 bytes_plaintext = 9;
+  uint64 bytes_ciphertext = 10;
+  uint64 bytes_overhead = 11;
+  uint64 rekey_count = 12;
+  repeated double bootstrap_times_ms = 13;
+  repeated double rekey_times_ms = 14;
+  double started_at_epoch_s = 15;
+  double ended_at_epoch_s = 16;
+  double threat_value = 17;
+  double energy_value = 18;
+  BenchmarkMode configured_mode = 19;
+  RuntimeProfile active_profile = 20;
+  uint64 last_sequence = 21;
+  uint64 heavy_messages = 22;
+  uint64 balanced_messages = 23;
+  uint64 lightweight_messages = 24;
+}
+
+message ResetStateRequest {}
+
+message ResetStateResponse {
+  bool ok = 1;
+  string message = 2;
+}
+
+message SessionHello {
+  string from_peer = 1;
+  bytes public_key = 2;
+  uint64 epoch = 3;
+}
+
+message SessionReply {
+  bool ok = 1;
+  bytes public_key = 2;
+  string message = 3;
+  double handshake_ms = 4;
+}
+
+message ProtectedMessage {
+  string from_peer = 1;
+  string to_peer = 2;
+  uint64 sequence = 3;
+  uint64 epoch = 4;
+  RuntimeProfile profile = 5;
+  bytes nonce = 6;
+  bytes ciphertext = 7;
+  bytes auth_tag = 8;
+  bytes hash_token = 9;
+  uint32 plaintext_size = 10;
+}
+
+message ProtectedAck {
+  bool ok = 1;
+  string message = 2;
+  uint64 sequence = 3;
+  uint32 observed_overhead = 4;
+}
+
+service CryptoPeer {
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+  rpc ConnectPeer(ConnectPeerRequest) returns (ConnectPeerResponse);
+  rpc StartScenario(StartScenarioRequest) returns (StartScenarioResponse);
+  rpc StopScenario(StopScenarioRequest) returns (StopScenarioResponse);
+  rpc GetMetrics(GetMetricsRequest) returns (MetricsResponse);
+  rpc ResetState(ResetStateRequest) returns (ResetStateResponse);
+  rpc ExchangeSession(SessionHello) returns (SessionReply);
+  rpc SendProtectedMessage(ProtectedMessage) returns (ProtectedAck);
+}

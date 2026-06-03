@@ -1,0 +1,22 @@
+name: adversarial-uav
+mode: adaptive
+duration_s: 25
+message_rate_hz: 12
+message_size_bytes: 512
+peer_count: 5
+network:
+  delay_ms: 15
+  jitter_ms: 4
+  loss_pct: 3
+threat_schedule:
+  - at_s: 0
+    value: 0.75
+  - at_s: 8
+    value: 0.95
+energy_schedule:
+  - at_s: 0
+    value: 0.85
+  - at_s: 15
+    value: 0.35
+rekey_interval_s: 6
+tags: ["thesis", "adversarial-uav"]

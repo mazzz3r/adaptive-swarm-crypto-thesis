@@ -1,0 +1,14 @@
+\chapter{Conclusion}
+\label{chap:conclusion}
+
+This work developed and evaluated an adaptive lightweight secure-communication framework for swarm-oriented systems. Its core idea is to switch among stronger and lighter runtime profiles so that security-oriented settings and performance-oriented settings are not fixed for the entire mission.
+
+The thesis showed that the main building blocks have complementary roles: X25519-style key exchange is suitable for session establishment, symmetric encryption provides efficient payload protection, and HMAC- or hash-token-based runtime authentication keeps data-plane overhead low. No single static profile fits every condition, which justifies adaptive selection.
+
+The thesis retained formal reasoning only for the data-plane properties that the benchmarked prototype actually relies on, and it complemented that reasoning with an executable benchmark suite. Under the constrained host setup used in the practical evaluation, lightweight mode achieved the best measured throughput and the lowest normalized energy proxy per delivered message, while adaptive mode correctly switched between profiles and remained between the two static extremes on efficiency.
+
+The main contributions are threefold. First, the thesis formalized adaptive secure communication for swarm-oriented systems through a dynamic graph model, a state vector, and a profile-selection function. Second, it translated that model into a concrete pairwise prototype with heavy, balanced, lightweight, and adaptive operating modes. Third, it turned the combined formal and practical results into bounded design guidance for selecting between those modes under constrained execution.
+
+The practical significance of the work is that the same profile-switching pattern can be parameterized across different mission profiles without redesigning the entire data plane. The resulting framework is implementation-backed, but its evidence must still be interpreted carefully: the benchmark validates behavior on constrained host-based peers, not on physical robots or large deployed swarms.
+
+Future work should focus on three directions: authenticated control-plane support, true multi-peer validation, and later hardware or post-quantum evaluation. In that sense, the thesis establishes a concrete starting point for adaptive secure communication, while also making clear which parts already have executable evidence and which parts remain architectural extensions.

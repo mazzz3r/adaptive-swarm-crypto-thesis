@@ -1,0 +1,38 @@
+services:
+  peer_a:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bench
+    command: ["python", "-m", "bench.server", "--name", "peer-a", "--port", "50051"]
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "50051:50051"
+
+  peer_b:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bench
+    command: ["python", "-m", "bench.server", "--name", "peer-b", "--port", "50052"]
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "50052:50052"
+
+  peer_extra:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bench
+    command: ["python", "-m", "bench.server", "--name", "peer-extra", "--port", "50053"]
+    cap_add:
+      - NET_ADMIN
+    expose:
+      - "50053"
+
+  runner:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bench
+    command: ["sleep", "infinity"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

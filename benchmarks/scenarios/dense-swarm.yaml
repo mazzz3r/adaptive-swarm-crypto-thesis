@@ -1,0 +1,20 @@
+name: dense-swarm
+mode: adaptive
+duration_s: 25
+message_rate_hz: 12
+message_size_bytes: 512
+peer_count: 6
+network:
+  delay_ms: 12
+  jitter_ms: 4
+  loss_pct: 1
+threat_schedule:
+  - at_s: 0
+    value: 0.25
+  - at_s: 12
+    value: 0.7
+energy_schedule:
+  - at_s: 0
+    value: 0.9
+rekey_interval_s: 10
+tags: ["generic", "density"]

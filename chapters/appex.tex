@@ -1,0 +1,37 @@
+\appendix
+\chapter{Benchmark Artifact Manifest}
+
+The public repository contains the reproducibility artifacts used in the
+practical evaluation: source code under \path{benchmarks/src}, scenario presets
+under \path{benchmarks/scenarios}, tests under \path{benchmarks/tests}, Docker
+configuration, and the final benchmark matrix under
+\path{benchmarks/thesis-report-final}. The comparison subdirectory contains
+aggregate CSV, JSON, Markdown, and plot files. Each executed benchmark run has
+its own directory with \path{summary.csv}, \path{summary.json},
+\path{raw_metrics.json}, and per-run plots.
+
+The repository is available at
+\url{https://github.com/mazzz3r/adaptive-swarm-crypto-thesis}.
+
+The final thesis matrix contains 228 summary rows: 84 main-stability rows,
+72 CPU-sensitivity rows, 36 rekey-sensitivity rows, and 36 network-impairment
+rows. Each matrix cell is represented by three summary rows. The lossy
+network-impairment subset is retained as evidence of severe transport fragility
+rather than clean steady-state cryptographic performance.
+
+\chapter{Reproduction Command}
+
+The default matrix can be reproduced from the benchmark subproject with:
+
+\begin{lstlisting}
+uv run bench thesis-report \
+  --scenario scenarios/saturation-adaptive-long.yaml \
+  --rates 25,50,75,100,150,200,300 \
+  --duration-s 60 \
+  --repeats 3 \
+  --cpu-limits 0.05,0.10,0.25 \
+  --rekey-intervals 2,5,10 \
+  --network-profiles clean=0/0/0,mild=20/5/2,lossy=50/15/5 \
+  --memory-limit-mb 128 \
+  --output-dir thesis-report-final
+\end{lstlisting}

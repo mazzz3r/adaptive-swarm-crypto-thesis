@@ -1,0 +1,20 @@
+name: agriculture
+mode: adaptive
+duration_s: 25
+message_rate_hz: 14
+message_size_bytes: 384
+peer_count: 3
+network:
+  delay_ms: 6
+  jitter_ms: 1
+  loss_pct: 0
+threat_schedule:
+  - at_s: 0
+    value: 0.1
+energy_schedule:
+  - at_s: 0
+    value: 1.0
+  - at_s: 18
+    value: 0.15
+rekey_interval_s: 20
+tags: ["thesis", "agriculture"]

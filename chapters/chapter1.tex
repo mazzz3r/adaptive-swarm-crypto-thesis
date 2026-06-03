@@ -1,0 +1,21 @@
+\chapter{Introduction}
+\label{chap:intro}
+
+Swarm robotics studies how many relatively simple agents can coordinate through local interaction without continuous centralized control~\cite{diasSwarmRoboticsPerspective2021,debieSwarmRoboticsSurvey2023}. In practice, that coordination depends on message exchange over dynamic wireless links, so communication reliability and communication security become intertwined design concerns rather than separate subsystems~\cite{varadharajanSwarmRelaysDistributed2020,chenSecuringEmergentBehaviour2021}.
+
+The literature reviewed in this thesis suggests a recurring trade-off. Lightweight cryptographic mechanisms are attractive for constrained UAV and IoT-style platforms because they reduce key size, messaging overhead, and runtime cost~\cite{adeniyiSystematicReviewECC2024,hanLightweightSecureCommunication2025,manikandanASMTPAnonymousSecureMessaging2024}. At the same time, stronger decentralized trust mechanisms, such as blockchain-assisted coordination or attestation frameworks, can improve system assurance but usually add latency, bandwidth cost, or implementation complexity~\cite{sunResearchDataSecurityEmergency2022,pachecoSecuringFederatedLearning2024,kohliSwarmNetFirmwareAttestation2024}. Within this representative corpus, adaptive control of cryptographic settings is discussed less often than the underlying primitives themselves.
+
+This thesis addresses that narrower gap by developing and evaluating an adaptive lightweight communication framework that dynamically balances security-oriented settings and performance-oriented settings in a swarm-inspired environment. The relevance of the topic follows from the growing use of distributed robotic and IoT-style systems in settings where communication must remain protected even when energy, bandwidth, and processing capacity are limited.
+
+The purpose of the thesis is to design and evaluate a reproducible adaptive secure-communication framework for swarm-oriented systems. The main tasks are to review relevant swarm-security and lightweight-cryptography literature, define a formal model and threat model, specify adaptive cryptographic profiles, implement a pairwise benchmark prototype, and compare static-heavy, static-balanced, static-lightweight, and adaptive operation under constrained execution.
+
+The object of study is secure communication in swarm-oriented distributed systems. The subject of study is adaptive selection of cryptographic profiles for the protected data plane. The scientific novelty of the work is the combination of a bounded formal model with an executable benchmark that exposes the security--performance trade-off instead of treating the adaptive framework only as a conceptual architecture.
+
+The swarm network is modeled as a dynamic graph $G(V,E,t)$, and the adaptation function
+\begin{equation}
+F : S(t) \rightarrow P,
+\label{eq:adaptation_function}
+\end{equation}
+maps swarm-state variables $S(t)$ to configurable cryptographic parameters $P$. At the conceptual level, $S(t)$ includes density, energy, packet loss, and threat estimates, while $P$ includes key length, cipher selection, authentication mode, and key-rotation frequency. At the executable level, the benchmark prototype instantiates a smaller pairwise subset of this idea: it switches between three runtime profiles using scripted threat and energy inputs and evaluates the resulting data-plane behavior under constrained CPU and memory budgets.
+
+The contribution is therefore twofold. First, the thesis develops a formal and architectural model for adaptive secure communication in swarm-oriented systems. Second, it grounds that model in a reproducible pairwise benchmark prototype instead of relying only on analytical estimates. The implementation artifacts, scenario presets, tests, and final benchmark matrix are organized as a reproducible repository artifact accompanying the thesis. The resulting evidence is intentionally narrower than a field deployment: it supports claims about the behavior of a constrained host-based prototype, not about full multi-hop swarm operation on physical robots.

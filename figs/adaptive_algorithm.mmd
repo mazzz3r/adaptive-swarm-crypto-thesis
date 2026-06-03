@@ -1,0 +1,27 @@
+flowchart TD
+  Start(["Adaptation tick"])
+  Inputs["Read inputs: threat θ, energy ē"]
+  Threat{"θ >= 0.8?"}
+  LowEnergy{"ē <= 0.2Emax?"}
+  Heavy["Heavy profile<br/>AES-256-GCM + HMAC-SHA256"]
+  Lightweight["Lightweight profile<br/>ChaCha20-Poly1305 + sequence-bound hash token"]
+  Balanced["Balanced profile<br/>AES-192-GCM + HMAC-SHA256"]
+  Apply["Apply selected runtime profile"]
+  Send["Protect next messages with selected profile"]
+
+  Start --> Inputs --> Threat
+  Threat -- "yes" --> Heavy
+  Threat -- "no" --> LowEnergy
+  LowEnergy -- "yes" --> Lightweight
+  LowEnergy -- "no" --> Balanced
+  Heavy --> Apply
+  Lightweight --> Apply
+  Balanced --> Apply
+  Apply --> Send
+
+  classDef decision fill:#fff7d6,stroke:#b88700,stroke-width:1px,color:#111;
+  classDef profile fill:#eaf3ff,stroke:#2468a8,stroke-width:1px,color:#111;
+  classDef io fill:#eef7ed,stroke:#4b8b3b,stroke-width:1px,color:#111;
+  class Threat,LowEnergy decision;
+  class Heavy,Balanced,Lightweight profile;
+  class Inputs,Apply,Send io;

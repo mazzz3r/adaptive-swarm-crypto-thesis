@@ -1,0 +1,24 @@
+flowchart TD
+  State["Selector inputs<br/>threat θ<br/>energy ē"]
+  Threat{"θ >= 0.8?"}
+  Heavy["Select Heavy<br/>AES-256-GCM<br/>HMAC-SHA256"]
+  Energy{"ē <= 0.2Emax?"}
+  Light["Select Lightweight<br/>ChaCha20-Poly1305<br/>sequence-bound hash token"]
+  Balanced["Select Balanced<br/>AES-192-GCM<br/>HMAC-SHA256"]
+  Output["Runtime profile P"]
+
+  State --> Threat
+  Threat -- "true" --> Heavy
+  Threat -- "false" --> Energy
+  Energy -- "true" --> Light
+  Energy -- "false" --> Balanced
+  Heavy --> Output
+  Light --> Output
+  Balanced --> Output
+
+  classDef decision fill:#fff7d6,stroke:#b88700,stroke-width:1px,color:#111;
+  classDef profile fill:#eaf3ff,stroke:#2468a8,stroke-width:1px,color:#111;
+  classDef state fill:#eef7ed,stroke:#4b8b3b,stroke-width:1px,color:#111;
+  class Threat,Energy decision;
+  class Heavy,Balanced,Light profile;
+  class State,Output state;

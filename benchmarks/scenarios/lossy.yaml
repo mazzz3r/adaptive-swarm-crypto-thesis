@@ -1,0 +1,18 @@
+name: lossy
+mode: adaptive
+duration_s: 20
+message_rate_hz: 8
+message_size_bytes: 512
+peer_count: 2
+network:
+  delay_ms: 20
+  jitter_ms: 5
+  loss_pct: 5
+threat_schedule:
+  - at_s: 0
+    value: 0.35
+energy_schedule:
+  - at_s: 0
+    value: 0.9
+rekey_interval_s: 10
+tags: ["generic", "lossy"]
