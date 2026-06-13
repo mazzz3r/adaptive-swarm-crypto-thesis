@@ -649,10 +649,10 @@ def s_results1():
         txt(lx + 16, 396, nm, "Sans", 10, TEXT_MUT, "l")
         lx += 30 + len(nm) * 6
 
-    # hero takeaway
-    txt(540, 430, "−26.7%", "Serif-B", 34, BROWN_DK, "l")
-    txt(676, 426, "less protection cost", "Sans-B", 13, BROWN_DK, "l")
-    txt(676, 448, "vs. always-heavy · full coverage", "Sans", 12, TEXT_MUT, "l")
+    # hero takeaway — lead with the definitional (hard-to-contest) claim
+    txt(540, 422, "100%", "Serif-B", 34, BROWN_DK, "l")
+    txt(642, 418, "of the run at the right level", "Sans-B", 13, BROWN_DK, "l")
+    txt(642, 440, "−26.7% tier-work vs. always-heavy", "Sans", 11.5, TEXT_MUT, "l")
     c.showPage()
 
 # ============================================================================
@@ -743,9 +743,50 @@ def s_conclusion():
         "Sans", 12, TAN, "r")
     c.showPage()
 
+# ============================================================================
+# 13 — Limitations & scope  (BACKUP slide for Q&A)
+# ============================================================================
+
+def s_limitations():
+    bg()
+    rect(66, 50, 4, 58, fill=BROWN)
+    txt(84, 54, "Q&A · BACKUP", "Sans-B", 11, BROWN, "l", tracking=1.6)
+    txt(83, 72, "Limitations & scope", "Serif-B", 27, BROWN_DK, "l")
+    txt(894, 508, "backup — not part of the 10-min talk", "Sans-I", 9.5, TEXT_MUT, "r")
+
+    items = [
+        ("Pairwise, not a swarm",
+         "two peers on the measured path; multi-hop & churn are out of scope"),
+        ("Host, not hardware",
+         "Docker + gRPC containers — no embedded radios or microcontrollers"),
+        ("Energy is a model proxy",
+         "valid for relative comparison only, not battery-accurate"),
+        ("Scripted inputs",
+         "threat & energy are scripted, not sensed or estimated"),
+        ("Data plane only",
+         "no authenticated control plane (signed bootstrap / updates)"),
+        ("Coarse cost metric",
+         "crypto-work counts bytes, so heavy ≈ balanced; thresholds set by hand"),
+    ]
+    cw = 392; gap = 44; rh = 84; top = 168
+    for i, (t, d) in enumerate(items):
+        col = i % 2; row = i // 2
+        x = 66 + col * (cw + gap); y = top + row * rh
+        circle(x + 7, y + 13, 5, fill=BROWN)
+        txt(x + 26, y + 4, t, "Serif-B", 16, BROWN_DK, "l")
+        para(x + 26, y + 30, cw - 26, d, size=12.5, color=TEXT_MUT, leading=17)
+
+    line(66, 446, 894, 446, LINE_SOFT, 1.2)
+    para(66, 462, 828,
+         "Every claim is scoped to a constrained pairwise prototype — "
+         "<b>validated, not extrapolated</b>.",
+         size=14, color=BROWN, font="Sans-I", align=TA_CENTER)
+    c.showPage()
+
 # ----------------------------------------------------------------------------
 for fn in (s_title, s_motivation, s_contrib, s_model, s_threat, s_blocks,
-           s_profiles, s_logic, s_setup, s_results1, s_results2, s_conclusion):
+           s_profiles, s_logic, s_setup, s_results1, s_results2, s_conclusion,
+           s_limitations):
     fn()
 c.save()
 print("wrote", OUT)
