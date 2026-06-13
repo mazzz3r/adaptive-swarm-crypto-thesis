@@ -380,50 +380,52 @@ def s_model():
     header("Formal model", "The swarm as a dynamic graph", 4)
 
     # left: skeleton graph
-    txt(280, 196, "G ( V, E, t )", "Mono-B", 18, BROWN_DK, "c")
-    txt(280, 222, "nodes = agents   ·   edges = live links", "Sans", 12, TEXT_MUT, "c")
-    cxg, cyg = 280, 350
-    nodes = [(cxg-130, cyg-60), (cxg-15, cyg-85), (cxg+95, cyg-55),
-             (cxg+135, cyg+35), (cxg+25, cyg+80), (cxg-95, cyg+65), (cxg-5, cyg-2)]
+    txt(280, 176, "G ( V, E, t )", "Mono-B", 18, BROWN_DK, "c")
+    txt(280, 202, "nodes = agents   ·   edges = live links", "Sans", 12, TEXT_MUT, "c")
+    cxg, cyg = 280, 332
+    nodes = [(cxg-132, cyg-74), (cxg-18, cyg-92), (cxg+96, cyg-62),
+             (cxg+134, cyg+30), (cxg+24, cyg+84), (cxg-96, cyg+68), (cxg-6, cyg-4)]
     for i in range(len(nodes)):
         for j in range(i+1, len(nodes)):
             if math.dist(nodes[i], nodes[j]) < 140:
                 line(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1], TAN, 1.4)
     for k, (px, py) in enumerate(nodes):
         ic_node(px, py, 30 if k == 6 else 26, HEAVY_C if k == 6 else BROWN, lw=2.1)
-    txt(280, 458, "each node carries energy · keys · position",
+    txt(280, 450, "each node carries energy · keys · position",
         "Sans-I", 12, TEXT_MUT, "c")
 
     # divider
-    line(560, 196, 560, 458, LINE_SOFT, 1.2)
+    line(560, 176, 560, 478, LINE_SOFT, 1.2)
 
     # right: vertical S(t) -> F -> P flow
     rcx = 728
-    kicker_label(616, 200, "the adaptation function", BROWN)
-    txt(616, 226, "F : S(t) → P", "Mono-B", 24, BROWN_DK, "l")
+    kicker_label(616, 178, "the adaptation function", BROWN)
+    txt(616, 202, "F : S(t) → P", "Mono-B", 24, BROWN_DK, "l")
 
     # S(t) token
-    rrect(616, 286, 224, 56, stroke=LINE, fill=CARD, r=12)
-    txt(rcx, 296, "S(t)", "Serif-B", 18, BROWN_DK, "c")
-    txt(rcx, 320, "energy · threat · density · loss", "Sans", 11, TEXT_MUT, "c")
-    line(rcx, 342, rcx, 360, TAN, 1.6)
-    poly([(rcx-5, 354), (rcx+5, 354), (rcx, 360)], fill=TAN)
+    rrect(616, 262, 224, 58, stroke=LINE, fill=CARD, r=12)
+    txt(rcx, 274, "S(t)", "Serif-B", 18, BROWN_DK, "c")
+    txt(rcx, 298, "energy · threat · density · loss", "Sans", 11, TEXT_MUT, "c")
+    line(rcx, 320, rcx, 344, TAN, 1.6)
+    poly([(rcx-5, 338), (rcx+5, 338), (rcx, 344)], fill=TAN)
 
     # F node
-    circle(rcx, 384, 22, fill=BROWN_DK)
-    txt(rcx, 374, "F", "Serif-B", 22, IVORY, "c")
-    line(rcx, 406, rcx, 424, TAN, 1.6)
-    poly([(rcx-5, 418), (rcx+5, 418), (rcx, 424)], fill=TAN)
+    circle(rcx, 370, 23, fill=BROWN_DK)
+    txt(rcx, 360, "F", "Serif-B", 22, IVORY, "c")
+    line(rcx, 393, rcx, 417, TAN, 1.6)
+    poly([(rcx-5, 411), (rcx+5, 411), (rcx, 417)], fill=TAN)
 
-    # P token: three profile dots
-    rrect(616, 426, 224, 56, stroke=LINE, fill=CARD, r=12)
-    txt(rcx, 436, "P", "Serif-B", 18, BROWN_DK, "c")
+    # P token: three profile dots, centred as a group with padding
+    rrect(616, 418, 224, 60, stroke=LINE, fill=CARD, r=12)
+    txt(rcx, 430, "P", "Serif-B", 18, BROWN_DK, "c")
     profs = [("heavy", HEAVY_C), ("balanced", BALANCED_C), ("light", LIGHT_C)]
-    pw = 224 / 3
-    for i, (pn, pc) in enumerate(profs):
-        px = 616 + pw * i + pw/2
-        circle(px - 34, 466, 5, fill=pc)
-        txt(px - 24, 461, pn, "Sans-B", 10.5, BROWN_DK, "l")
+    igap = 22
+    widths = [14 + c.stringWidth(pn, "Sans-B", 10.5) for pn, _ in profs]
+    gx = 616 + (224 - (sum(widths) + igap * (len(profs) - 1))) / 2
+    for (pn, pc), wseg in zip(profs, widths):
+        circle(gx + 4, 463, 4.5, fill=pc)
+        txt(gx + 14, 458, pn, "Sans-B", 10.5, BROWN_DK, "l")
+        gx += wseg + igap
     c.showPage()
 
 # ============================================================================
