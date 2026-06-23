@@ -45,9 +45,11 @@ WARN_C     = HexColor("#A8502E")
 # Liberation (serif/sans) + DejaVu (mono). Search known font dirs so the deck
 # builds on the usual Linux fontconfig layout and on other machines where the
 # same TTFs live elsewhere. Override with DECK_FONT_DIRS (os.pathsep-separated).
+_HERE = os.path.dirname(os.path.abspath(__file__))
 _FONT_DIRS = [
     d for d in os.environ.get("DECK_FONT_DIRS", "").split(os.pathsep) if d
 ] + [
+    os.path.join(_HERE, "fonts"),       # bundled with the deck → builds anywhere
     "/usr/share/fonts/truetype/liberation",
     "/usr/share/fonts/truetype/dejavu",
     "/usr/share/fonts/truetype",
@@ -289,7 +291,7 @@ def header(kicker, title, num, title_size=27):
     rect(66, 50, 4, 58, fill=BROWN)
     txt(84, 54, kicker.upper(), "Sans-B", 11, BROWN, "l", tracking=1.6)
     txt(83, 72, title, "Serif-B", title_size, BROWN_DK, "l")
-    txt(W - 66, 508, f"{num:02d} — 11", "Sans", 9.5, TEXT_MUT, "r")
+    txt(W - 66, 508, f"{num:02d} — 12", "Sans", 9.5, TEXT_MUT, "r")
 
 
 def chip(x, y, w, h, label, fill, fg, size=11, font="Sans-B", r=10, stroke=None):
@@ -344,12 +346,63 @@ def s_title():
     c.showPage()
 
 # ============================================================================
-# 02 — Motivation : one big idea + skeleton spectrum
+# 02 — Context : what a swarm is, where it runs, why it matters now
+# ============================================================================
+
+def s_context():
+    bg()
+    header("Context", "Swarms are leaving the lab", 2)
+
+    # left: swarm schematic — agents + live links
+    kicker_label(96, 178, "what it is", BROWN)
+    nodes = [(166, 262), (248, 224), (334, 246), (402, 306),
+             (372, 390), (286, 420), (196, 376), (262, 318), (344, 336)]
+    hub = 7
+    c.setStrokeColor(TAN); c.setLineWidth(1.3); c.setLineCap(1)
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            if math.dist(nodes[i], nodes[j]) < 104:
+                c.line(nodes[i][0], H - nodes[i][1],
+                       nodes[j][0], H - nodes[j][1])
+    for k, (nx, ny) in enumerate(nodes):
+        if k == hub:
+            circle(nx, ny, 9, fill=HEAVY_C)
+        else:
+            circle(nx, ny, 7, fill=CARD, stroke=BROWN, lw=1.8)
+    txt(283, 452, "agents linked by live, shifting wireless channels",
+        "Sans-I", 12, TEXT_MUT, "c")
+
+    line(500, 196, 500, 446, LINE_SOFT, 1.2)
+
+    # right: why it matters now — three short beats
+    kicker_label(540, 178, "why it matters now", HEAVY_C)
+    pts = [
+        ("Communication is the system",
+         "no central controller — agents act only on what they exchange"),
+        ("Already in the field",
+         "search & rescue · agriculture · inspection · defence"),
+        ("An open research front",
+         "lightweight crypto is active (NIST LWC, COSIC) — "
+         "adapting it at runtime is not"),
+    ]
+    for i, (t, d) in enumerate(pts):
+        y = 232 + i * 76
+        circle(550, y + 6, 4, fill=HEAVY_C)
+        txt(568, y - 4, t, "Serif-B", 16, BROWN_DK, "l")
+        para(568, y + 18, 322, d, size=12, color=TEXT_MUT, leading=16)
+
+    txt(W/2, 478,
+        "Growing deployment makes protected swarm communication a timely, necessary problem.",
+        "Serif-I", 13.5, BROWN, "c")
+    c.showPage()
+
+# ============================================================================
+# 03 — Motivation : one big idea + skeleton spectrum
 # ============================================================================
 
 def s_motivation():
     bg()
-    header("The problem", "No single cipher fits a whole mission", 2)
+    header("The problem", "No single cipher fits a whole mission", 3)
 
     # big spectrum slider
     sx, ex, yy = 150, 810, 300
@@ -384,7 +437,7 @@ def s_motivation():
 
 def s_literature():
     bg()
-    header("Literature", "Strong primitives — but fixed for the whole mission", 3)
+    header("Literature", "Strong primitives — but fixed for the whole mission", 4)
 
     kicker_label(96, 178, "what the field offers", BROWN)
     field = [
@@ -430,7 +483,7 @@ def s_literature():
 def s_aim():
     bg()
     header("Aim & research question",
-           "Does adapting crypto at runtime pay off?", 4, title_size=26)
+           "Does adapting crypto at runtime pay off?", 5, title_size=26)
     txt(84, 118, "— can it hold the right protection at lower cost than a fixed profile?",
         "Serif-I", 16, BROWN, "l")
 
@@ -463,7 +516,7 @@ def s_aim():
 
 def s_model():
     bg()
-    header("Formal model", "The swarm as a dynamic graph", 5)
+    header("Formal model", "The swarm as a dynamic graph", 6)
 
     # left: skeleton graph
     txt(280, 176, "G ( V, E, t )", "Mono-B", 18, BROWN_DK, "c")
@@ -525,7 +578,7 @@ def s_model():
 
 def s_security():
     bg()
-    header("Security model", "Three threats, and a data plane that adapts", 6)
+    header("Security model", "Three threats, and a data plane that adapts", 7)
 
     # left: adversary capabilities
     kicker_label(96, 178, "the adversary can", HEAVY_C)
@@ -567,8 +620,8 @@ def s_security():
         rect(x, y1 + k * seg, 5, seg, fill=col)
     c.restoreState()
     txt(x + 22, y1 + 16, "DATA PLANE", "Sans-B", 9.5, BROWN, "l", tracking=1.6)
-    chip(x + w - 132, y1 + 18, 116, 24, "switches per tick", BROWN_DK, IVORY,
-         9, "Sans-B", r=12)
+    chip(x + w - 98, y1 + 19, 82, 24, "adaptive", TAN_LT, BROWN_DK, 9.5,
+         "Sans-B", r=12)
     rows = [("Heavy", HEAVY_C, "AES-256-GCM + HMAC"),
             ("Balanced", BALANCED_C, "AES-192-GCM + HMAC"),
             ("Lightweight", LIGHT_C, "ChaCha20-Poly1305 + token")]
@@ -587,31 +640,39 @@ def s_security():
 
 def s_profiles():
     bg()
-    header("Profiles", "Three operating points", 7)
+    header("Profiles", "Three operating points", 8)
 
     profs = [
-        ("HEAVY", HEAVY_C, IVORY, "AES-256-GCM", "+ HMAC-SHA256", "0.250", "max protection"),
-        ("BALANCED", BALANCED_C, IVORY, "AES-192-GCM", "+ HMAC-SHA256", "0.250", "mixed conditions"),
-        ("LIGHTWEIGHT", LIGHT_C, BROWN_DK, "ChaCha20-Poly1305", "+ hash token", "0.125", "efficiency first"),
+        ("HEAVY", HEAVY_C, IVORY, "AES-256-GCM", "+ HMAC-SHA256",
+         "High threat", "strongest protection"),
+        ("BALANCED", BALANCED_C, IVORY, "AES-192-GCM", "+ HMAC-SHA256",
+         "Steady state", "balanced default"),
+        ("LIGHTWEIGHT", LIGHT_C, BROWN_DK, "ChaCha20-Poly1305", "+ hash token",
+         "Low energy", "lowest per-message cost"),
     ]
     cw = 268; gap = 14; x0 = 66; top = 178; hh = 250
-    for i, (name, ac, fg, p1, p2, val, tag) in enumerate(profs):
+    for i, (name, ac, fg, p1, p2, level, note) in enumerate(profs):
         x = x0 + i * (cw + gap)
+        ac_t = ac if ac != LIGHT_C else BROWN_DK
         rrect(x, top, cw, hh, stroke=LINE, fill=CARD, r=14)
         _clip_card(x, top, cw, hh, 14)
         rect(x, top, cw, 6, fill=ac)
         c.restoreState()
         chip(x + 22, top + 26, 110, 26, name, ac, fg, 11, "Sans-B", r=13)
+        if name == "HEAVY":
+            qlbl, qsz = "GROVER-RESISTANT", 8.5
+            qw = pdfmetrics.stringWidth(qlbl, "Sans-B", qsz) + 22
+            chip(x + cw - 22 - qw, top + 28, qw, 22, qlbl, GOOD_C, IVORY, qsz, "Sans-B", r=11)
         txt(x + 24, top + 70, p1, "Mono-B", 14.5, BROWN_DK, "l")
         txt(x + 24, top + 92, p2, "Mono", 12.5, TEXT_MUT, "l")
         line(x + 24, top + 126, x + cw - 24, top + 126, LINE_SOFT, 1.2)
-        txt(x + 24, top + 142, val, "Serif-B", 50, ac if ac != LIGHT_C else BROWN_DK, "l")
-        txt(x + 150, top + 168, "MiB", "Sans", 13, TEXT_MUT, "l")
-        txt(x + 24, top + 206, "crypto work / message", "Sans-B", 10.5, TEXT_MUT, "l", tracking=1)
+        txt(x + 24, top + 150, "SELECTED WHEN", "Sans-B", 9.5, TEXT_MUT, "l", tracking=1.6)
+        txt(x + 24, top + 174, level, "Serif-B", 19, ac_t, "l")
+        txt(x + 24, top + 198, note, "Sans", 12, TEXT_MUT, "l")
 
-    txt(W/2, 452, "Lightweight does half the per-message crypto work of the authenticated profiles.",
+    txt(W/2, 452, "Three operating points on one protection-versus-cost axis.",
         "Serif-I", 15, BROWN, "c")
-    txt(W/2, 480, "This metric counts bytes processed, so heavy and balanced come out equal; they differ in key length.",
+    txt(W/2, 480, "A simple rule moves between them at runtime: high threat selects heavy, low energy drops to lightweight, otherwise balanced.",
         "Sans-I", 11, TEXT_MUT, "c")
     c.showPage()
 
@@ -665,7 +726,7 @@ def s_logic():
 
 def s_setup():
     bg()
-    header("Benchmark", "A constrained, reproducible testbed", 8)
+    header("Benchmark", "A constrained, reproducible testbed", 9)
 
     # tiny two-peer schematic
     py = 210
@@ -680,13 +741,15 @@ def s_setup():
 
     # hero constraint stats
     line(96, 300, 864, 300, LINE_SOFT, 1.2)
-    stats = [("0.05", "CPU CORES"), ("128", "MiB RAM"),
-             ("64", "KiB / MSG"), ("60", "SECONDS"), ("×3", "REPEATS")]
+    stats = [("0.05", "CPU CORES", "main · up to 0.25"), ("128", "MiB RAM", None),
+             ("64", "KiB / MSG", None), ("60", "SECONDS", None), ("×3", "REPEATS", None)]
     n = len(stats); slot = 768 / n
-    for i, (v, l) in enumerate(stats):
+    for i, (v, l, note) in enumerate(stats):
         cx = 96 + slot * i + slot/2
         txt(cx, 330, v, "Serif-B", 46, BROWN_DK, "c")
         txt(cx, 388, l, "Sans-B", 10.5, TEXT_MUT, "c", tracking=1.4)
+        if note:
+            txt(cx, 404, note, "Sans-I", 8.5, TEXT_MUT, "c")
 
     txt(W/2, 446, "Measured: latency · throughput · drops · switches · crypto work",
         "Sans", 13, TEXT_MUT, "c")
@@ -698,7 +761,7 @@ def s_setup():
 
 def s_results1():
     bg()
-    header("Results · I", "Adaptive avoids both failure modes", 9)
+    header("Results · I", "Adaptive avoids both failure modes", 10)
     txt(84, 116, "Every static profile fails one way; adaptive fails neither.",
         "Serif-I", 15, BROWN, "l")
 
@@ -744,16 +807,22 @@ def s_results1():
 
 def s_results2():
     bg()
-    header("Results · II", "Under a tight CPU cap, transport dominates", 10)
+    header("Results · II", "Under a tight CPU cap, transport dominates", 11)
 
     # LEFT: delivered vs offered
     txt(96, 186, "DELIVERED vs OFFERED RATE", "Sans-B", 10.5, BROWN, "l", tracking=1.6)
-    txt(96, 202, "0.05-core cap · msg/s", "Sans-I", 11, TEXT_MUT, "l")
+    txt(96, 202, "0.05-core cap", "Sans-I", 11, TEXT_MUT, "l")
     ax0, ay0, axw, axh = 130, 410, 330, 160
     line(ax0, ay0, ax0 + axw, ay0, BROWN_DK, 1.4)
     line(ax0, ay0, ax0, ay0 - axh, BROWN_DK, 1.4)
     def px(r): return ax0 + axw * r/300
     def py(v): return ay0 - axh * v/70
+    # Y axis: title + numeric ticks
+    txt(ax0 - 6, py(70) - 24, "delivered · msg/s", "Sans-B", 9, BROWN, "l", tracking=0.4)
+    for v in (0, 30, 60):
+        line(ax0 - 4, py(v), ax0, py(v), BROWN_DK, 1.2)
+        txt(ax0 - 9, py(v) - 5, str(v), "Sans", 9, TEXT_MUT, "r")
+    # ideal
     line(ax0, ay0, px(70), py(70), TAN, 1.4, dash=(4, 3))
     txt(px(74), py(70) - 2, "ideal", "Sans-I", 10, TEXT_MUT, "l")
     rates = [25, 50, 75, 100, 150, 200, 300]
@@ -767,8 +836,10 @@ def s_results2():
     txt(px(150), py(62) - 16, "delivered", "Sans-B", 10, HEAVY_C, "l")
     circle(px(75), py(56), 9, stroke=BROWN, lw=1.6)
     txt(px(75) - 2, py(56) + 22, "knee", "Sans-B", 10, BROWN, "l")
+    # X axis: ticks + title
     for r in (25, 100, 200, 300):
         txt(px(r), ay0 + 8, str(r), "Sans", 9, TEXT_MUT, "c")
+    txt(ax0 + axw/2, ay0 + 24, "offered rate · msg/s", "Sans-B", 9, BROWN, "c", tracking=0.4)
 
     # RIGHT: CPU bars + hero
     txt(540, 186, "CPU CAP REMOVES THE BOTTLENECK", "Sans-B", 10.5, BROWN, "l", tracking=1.3)
@@ -869,9 +940,9 @@ def s_limitations():
 # ----------------------------------------------------------------------------
 # s_logic (Adaptation logic) is intentionally omitted from the rendered talk;
 # the function is kept above so the slide can be re-enabled later if needed.
-for fn in (s_title, s_motivation, s_literature, s_aim, s_model, s_security,
-           s_profiles, s_setup, s_results1, s_results2, s_conclusion,
-           s_limitations):
+for fn in (s_title, s_context, s_motivation, s_literature, s_aim, s_model,
+           s_security, s_profiles, s_setup, s_results1, s_results2,
+           s_conclusion, s_limitations):
     fn()
 c.save()
 print("wrote", OUT)
