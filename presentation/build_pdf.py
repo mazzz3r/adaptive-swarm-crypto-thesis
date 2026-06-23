@@ -223,7 +223,7 @@ def ic_pen(cx, cy, s, col, lw=2.2):
 def ic_key(cx, cy, s, col, lw=2.2):
     _pen(col, lw)
     circle(cx - s*0.18, cy, s*0.22, stroke=col, lw=lw)
-    line(cx - s*0.00, cy, cx + s*0.46, cy, col, lw)
+    line(cx + s*0.08, cy, cx + s*0.46, cy, col, lw)   # shaft starts at the bow edge
     line(cx + s*0.30, cy, cx + s*0.30, cy + s*0.16, col, lw)
     line(cx + s*0.46, cy, cx + s*0.46, cy + s*0.20, col, lw)
 
@@ -607,7 +607,7 @@ def s_security():
     txt(x + 22, y0 + 15, "SESSION SETUP", "Sans-B", 9.5, BROWN, "l", tracking=1.6)
     chip(x + w - 82, y0 + 19, 66, 24, "fixed", IVORY_2, BROWN, 9.5, "Sans-B", r=12)
     txt(x + 22, y0 + 32, "X25519 + HKDF-SHA256", "Mono-B", 13, BROWN_DK, "l")
-    txt(x + 22, y0 + 54, "forward secrecy · epoch rekeying", "Sans", 11, TEXT_MUT, "l")
+    txt(x + 22, y0 + 48, "forward secrecy · epoch rekeying", "Sans", 11, TEXT_MUT, "l")
 
     line(x + w/2, y0 + h0 + 2, x + w/2, y1 - 2, TAN, 1.4)
     poly([(x + w/2 - 4, y1 - 8), (x + w/2 + 4, y1 - 8), (x + w/2, y1 - 2)],
@@ -733,7 +733,7 @@ def s_setup():
     for (px, name) in [(250, "peer_a"), (650, "peer_b")]:
         rrect(px - 70, py - 34, 140, 68, stroke=BROWN, fill=CARD, lw=1.6, r=12)
         ic_node(px, py - 6, 30, BROWN, lw=2)
-        txt(px, py + 20, name, "Mono-B", 12, BROWN_DK, "c")
+        txt(px, py + 16, name, "Mono-B", 12, BROWN_DK, "c")
     line(326, py, 566, py, TAN, 2)
     poly([(566, py - 5), (566, py + 5), (574, py)], fill=TAN)
     chip(398, py - 17, 104, 34, "gRPC", IVORY_2, BROWN, 12, "Mono-B", r=16)
