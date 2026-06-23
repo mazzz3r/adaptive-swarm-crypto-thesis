@@ -39,17 +39,42 @@ HEAVY_C    = HexColor("#5A3A22")
 BALANCED_C = HexColor("#B0825A")
 LIGHT_C    = HexColor("#D8C3A0")
 GOOD_C     = HexColor("#7C9A6E")
+WARN_C     = HexColor("#A8502E")
 
 # ---- fonts -----------------------------------------------------------------
-FD = "/usr/share/fonts/truetype"
-pdfmetrics.registerFont(TTFont("Serif",   f"{FD}/liberation/LiberationSerif-Regular.ttf"))
-pdfmetrics.registerFont(TTFont("Serif-B", f"{FD}/liberation/LiberationSerif-Bold.ttf"))
-pdfmetrics.registerFont(TTFont("Serif-I", f"{FD}/liberation/LiberationSerif-Italic.ttf"))
-pdfmetrics.registerFont(TTFont("Sans",    f"{FD}/liberation/LiberationSans-Regular.ttf"))
-pdfmetrics.registerFont(TTFont("Sans-B",  f"{FD}/liberation/LiberationSans-Bold.ttf"))
-pdfmetrics.registerFont(TTFont("Sans-I",  f"{FD}/liberation/LiberationSans-Italic.ttf"))
-pdfmetrics.registerFont(TTFont("Mono",    f"{FD}/dejavu/DejaVuSansMono.ttf"))
-pdfmetrics.registerFont(TTFont("Mono-B",  f"{FD}/dejavu/DejaVuSansMono-Bold.ttf"))
+# Liberation (serif/sans) + DejaVu (mono). Search known font dirs so the deck
+# builds on the usual Linux fontconfig layout and on other machines where the
+# same TTFs live elsewhere. Override with DECK_FONT_DIRS (os.pathsep-separated).
+_FONT_DIRS = [
+    d for d in os.environ.get("DECK_FONT_DIRS", "").split(os.pathsep) if d
+] + [
+    "/usr/share/fonts/truetype/liberation",
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/truetype",
+    "/usr/share/fonts",
+    "/Library/Fonts",
+    os.path.expanduser("~/Library/Fonts"),
+]
+
+
+def _reg(name, filename):
+    for d in _FONT_DIRS:
+        p = os.path.join(d, filename)
+        if os.path.exists(p):
+            pdfmetrics.registerFont(TTFont(name, p))
+            return
+    raise FileNotFoundError(
+        f"{filename} not found in {_FONT_DIRS}; set DECK_FONT_DIRS")
+
+
+_reg("Serif",   "LiberationSerif-Regular.ttf")
+_reg("Serif-B", "LiberationSerif-Bold.ttf")
+_reg("Serif-I", "LiberationSerif-Italic.ttf")
+_reg("Sans",    "LiberationSans-Regular.ttf")
+_reg("Sans-B",  "LiberationSans-Bold.ttf")
+_reg("Sans-I",  "LiberationSans-Italic.ttf")
+_reg("Mono",    "DejaVuSansMono.ttf")
+_reg("Mono-B",  "DejaVuSansMono-Bold.ttf")
 
 c = canvas.Canvas(OUT, pagesize=(W, H))
 
@@ -72,6 +97,15 @@ def rrect(x, y, w, h, fill=None, stroke=None, lw=1.2, r=10):
         c.setStrokeColor(stroke); c.setLineWidth(lw)
     c.roundRect(x, _y(y, h), w, h, r, stroke=0 if stroke is None else 1,
                 fill=0 if fill is None else 1)
+
+
+def _clip_card(x, y, w, h, r=10):
+    """Clip subsequent drawing to a rounded card so accent bars keep its
+    rounded corners. Caller must pair with c.restoreState()."""
+    c.saveState()
+    p = c.beginPath()
+    p.roundRect(x, _y(y, h), w, h, r)
+    c.clipPath(p, stroke=0, fill=0)
 
 
 def rect(x, y, w, h, fill=None, stroke=None, lw=1.2):
@@ -255,7 +289,7 @@ def header(kicker, title, num, title_size=27):
     rect(66, 50, 4, 58, fill=BROWN)
     txt(84, 54, kicker.upper(), "Sans-B", 11, BROWN, "l", tracking=1.6)
     txt(83, 72, title, "Serif-B", title_size, BROWN_DK, "l")
-    txt(W - 66, 508, f"{num:02d} — 12", "Sans", 9.5, TEXT_MUT, "r")
+    txt(W - 66, 508, f"{num:02d} — 11", "Sans", 9.5, TEXT_MUT, "r")
 
 
 def chip(x, y, w, h, label, fill, fg, size=11, font="Sans-B", r=10, stroke=None):
@@ -300,6 +334,8 @@ def s_title():
     txt(83, 234, "for Swarm Robotics", "Serif-B", 46, IVORY, "l")
     txt(84, 300, "Adaptive lightweight cryptography that switches at runtime.",
         "Sans", 15, TAN, "l")
+    txt(84, 330, "search & rescue   ·   agriculture   ·   inspection   ·   defence",
+        "Sans", 12, BROWN, "l")
 
     txt(84, 408, "AUTHOR", "Sans-B", 10, BROWN, "l", tracking=1.4)
     txt(84, 422, "Georgii Butakov", "Serif-B", 18, IVORY, "l")
@@ -338,36 +374,86 @@ def s_motivation():
 
     txt(480, 178, "Security and performance are coupled —",
         "Serif", 19, BROWN_DK, "c")
-    txt(480, 204, "balance them at runtime, not at design time.",
+    txt(480, 204, "so balance them while the mission runs.",
         "Serif-I", 19, BROWN, "c")
     c.showPage()
 
 # ============================================================================
-# 03 — Contributions : three big pillars
+# 03 — Literature & the gap : two columns
 # ============================================================================
 
-def s_contrib():
+def s_literature():
     bg()
-    header("This thesis", "Design it formally — then measure it", 3)
+    header("Literature", "Strong primitives — but fixed for the whole mission", 3)
+
+    kicker_label(96, 178, "what the field offers", BROWN)
+    field = [
+        ("Lightweight crypto",
+         "ECC, AEAD, hash tokens — efficient on constrained nodes"),
+        ("Decentralised trust",
+         "blockchain & attestation — strong assurance, heavy stack"),
+        ("Resilient comms",
+         "self-healing relays, risk-aware routing — little built-in security"),
+    ]
+    for i, (t, d) in enumerate(field):
+        y = 232 + i * 76
+        circle(106, y + 6, 4, fill=BROWN)
+        txt(124, y - 4, t, "Serif-B", 16, BROWN_DK, "l")
+        para(124, y + 18, 330, d, size=12, color=TEXT_MUT, leading=16)
+
+    line(500, 196, 500, 446, LINE_SOFT, 1.2)
+
+    kicker_label(540, 178, "the gap", HEAVY_C)
+    gaps = [
+        ("Static configuration",
+         "security parameters fixed for the whole mission"),
+        ("Fragmented layers",
+         "trust, resilience & message protection studied apart"),
+        ("No executable comparison",
+         "adaptive ideas rarely benchmarked against static baselines"),
+    ]
+    for i, (t, d) in enumerate(gaps):
+        y = 232 + i * 76
+        circle(550, y + 6, 4, fill=HEAVY_C)
+        txt(568, y - 4, t, "Serif-B", 16, BROWN_DK, "l")
+        para(568, y + 18, 322, d, size=12, color=TEXT_MUT, leading=16)
+
+    txt(W/2, 470,
+        "Adaptive control of crypto settings is studied far less than the primitives themselves.",
+        "Serif-I", 14, BROWN, "c")
+    c.showPage()
+
+# ============================================================================
+# 04 — Aim, research question & contributions
+# ============================================================================
+
+def s_aim():
+    bg()
+    header("Aim & research question",
+           "Does adapting crypto at runtime pay off?", 4, title_size=26)
+    txt(84, 118, "— can it hold the right protection at lower cost than a fixed profile?",
+        "Serif-I", 16, BROWN, "l")
+
+    txt(66, 172, "HOW THIS THESIS ANSWERS IT", "Sans-B", 10.5, BROWN, "l", tracking=1.8)
 
     cols = [
         ("01", "MODEL", "Swarm graph + adaptation function",
          "F : S(t) → P", BROWN),
         ("02", "PROTOTYPE", "Pairwise testbed, four modes",
          "incl. adaptive switching", BALANCED_C),
-        ("03", "EVIDENCE", "Measured, not just estimated",
+        ("03", "EVIDENCE", "Measured in running code",
          "228 benchmark runs", HEAVY_C),
     ]
-    cw = 252; gap = 36; x0 = 66; top = 188
+    cw = 252; gap = 36; x0 = 66; top = 206
     for i, (n, t, desc, mono, ac) in enumerate(cols):
         x = x0 + i * (cw + gap)
-        txt(x, top, n, "Serif-B", 44, TAN, "l")
-        line(x, top + 64, x + cw, top + 64, LINE, 1.4)
-        txt(x, top + 80, t, "Sans-B", 14, BROWN_DK, "l", tracking=2)
-        para(x, top + 108, cw, desc, size=13.5, color=TEXT_MUT, leading=19)
-        txt(x, top + 176, mono, "Mono-B", 12, ac, "l")
+        txt(x, top, n, "Serif-B", 42, TAN, "l")
+        line(x, top + 62, x + cw, top + 62, LINE, 1.4)
+        txt(x, top + 78, t, "Sans-B", 14, BROWN_DK, "l", tracking=2)
+        para(x, top + 106, cw, desc, size=13.5, color=TEXT_MUT, leading=19)
+        txt(x, top + 172, mono, "Mono-B", 12, ac, "l")
 
-    txt(W/2, 452, "Novelty: a bounded formal model paired with an executable benchmark.",
+    txt(W/2, 472, "Novelty: a bounded formal model paired with an executable benchmark.",
         "Serif-I", 15, BROWN, "c")
     c.showPage()
 
@@ -377,7 +463,7 @@ def s_contrib():
 
 def s_model():
     bg()
-    header("Formal model", "The swarm as a dynamic graph", 4)
+    header("Formal model", "The swarm as a dynamic graph", 5)
 
     # left: skeleton graph
     txt(280, 176, "G ( V, E, t )", "Mono-B", 18, BROWN_DK, "c")
@@ -385,10 +471,15 @@ def s_model():
     cxg, cyg = 280, 332
     nodes = [(cxg-132, cyg-74), (cxg-18, cyg-92), (cxg+96, cyg-62),
              (cxg+134, cyg+30), (cxg+24, cyg+84), (cxg-96, cyg+68), (cxg-6, cyg-4)]
+    nsize = [30 if k == 6 else 26 for k in range(len(nodes))]
     for i in range(len(nodes)):
         for j in range(i+1, len(nodes)):
-            if math.dist(nodes[i], nodes[j]) < 140:
-                line(nodes[i][0], nodes[i][1], nodes[j][0], nodes[j][1], TAN, 1.4)
+            xi, yi = nodes[i]; xj, yj = nodes[j]
+            d = math.dist(nodes[i], nodes[j])
+            if d < 140:
+                ux, uy = (xj - xi) / d, (yj - yi) / d
+                ri, rj = nsize[i] * 0.55, nsize[j] * 0.55   # stop at body edge
+                line(xi + ux*ri, yi + uy*ri, xj - ux*rj, yj - uy*rj, TAN, 1.4)
     for k, (px, py) in enumerate(nodes):
         ic_node(px, py, 30 if k == 6 else 26, HEAVY_C if k == 6 else BROWN, lw=2.1)
     txt(280, 450, "each node carries energy · keys · position",
@@ -429,74 +520,65 @@ def s_model():
     c.showPage()
 
 # ============================================================================
-# 05 — Threat model : attacker vs guarantees, line icons
+# 06 — Security model : adversary -> hybrid stack that answers it
 # ============================================================================
 
-def s_threat():
+def s_security():
     bg()
-    header("Threat model", "What attackers do — what we guarantee", 5)
+    header("Security model", "Three threats, and a data plane that adapts", 6)
 
-    kicker_label(120, 178, "the adversary can", HEAVY_C)
+    # left: adversary capabilities
+    kicker_label(96, 178, "the adversary can", HEAVY_C)
     adv = [(ic_eye, "Eavesdrop", "read traffic"),
            (ic_pen, "Tamper", "inject / modify"),
            (ic_key, "Compromise", "leak keys & memory")]
     for i, (ic, t, d) in enumerate(adv):
-        y = 226 + i * 78
-        circle(150, y, 26, stroke=LINE, fill=CARD, lw=1.4)
-        ic(150, y, 30, HEAVY_C)
-        txt(196, y - 14, t, "Serif-B", 17, BROWN_DK, "l")
-        txt(196, y + 8, d, "Sans", 13, TEXT_MUT, "l")
+        y = 252 + i * 76
+        circle(126, y, 23, stroke=LINE, fill=CARD, lw=1.4)
+        ic(126, y, 27, HEAVY_C)
+        txt(166, y - 13, t, "Serif-B", 16, BROWN_DK, "l")
+        txt(166, y + 7, d, "Sans", 12, TEXT_MUT, "l")
 
-    line(480, 196, 480, 452, LINE_SOFT, 1.2)
+    line(452, 196, 452, 452, LINE_SOFT, 1.2)
 
-    kicker_label(540, 178, "the data plane guarantees", GOOD_C)
-    gua = [(ic_lock, "Confidentiality", "AEAD, unique nonce"),
-           (ic_shield, "Authenticity", "HMAC / hash token"),
-           (ic_check, "Integrity & containment", "AEAD tag · epoch rekeying")]
-    for i, (ic, t, d) in enumerate(gua):
-        y = 226 + i * 78
-        circle(570, y, 26, stroke=LINE, fill=CARD, lw=1.4)
-        ic(570, y, 30, BROWN)
-        txt(616, y - 14, t, "Serif-B", 17, BROWN_DK, "l")
-        txt(616, y + 8, d, "Sans", 13, TEXT_MUT, "l")
-    c.showPage()
+    # right: the stack — a fixed setup layer + an adaptive data-plane layer
+    x, w = 496, 398
+    kicker_label(x, 178, "our defence", GOOD_C)
 
-# ============================================================================
-# 06 — Building blocks : layered skeleton stack
-# ============================================================================
+    y0, h0 = 216, 66
+    y1, h1 = 300, 150
+    rrect(x, y0, w, h0, stroke=LINE, fill=CARD, r=12)
+    _clip_card(x, y0, w, h0, 12)
+    rect(x, y0, 5, h0, fill=BROWN_DK)
+    c.restoreState()
+    txt(x + 22, y0 + 15, "SESSION SETUP", "Sans-B", 9.5, BROWN, "l", tracking=1.6)
+    chip(x + w - 82, y0 + 19, 66, 24, "fixed", IVORY_2, BROWN, 9.5, "Sans-B", r=12)
+    txt(x + 22, y0 + 32, "X25519 + HKDF-SHA256", "Mono-B", 13, BROWN_DK, "l")
+    txt(x + 22, y0 + 54, "forward secrecy · epoch rekeying", "Sans", 11, TEXT_MUT, "l")
 
-def s_blocks():
-    bg()
-    header("Building blocks", "One hybrid stack — each primitive where it fits", 6)
+    line(x + w/2, y0 + h0 + 2, x + w/2, y1 - 2, TAN, 1.4)
+    poly([(x + w/2 - 4, y1 - 8), (x + w/2 + 4, y1 - 8), (x + w/2, y1 - 2)],
+         fill=TAN)
 
-    layers = [
-        ("SESSION SETUP", "X25519  +  HKDF-SHA256",
-         "ephemeral key exchange per epoch → forward secrecy", "periodic", BROWN_DK),
-        ("PAYLOAD", "AES-GCM / ChaCha20-Poly1305",
-         "AEAD confidentiality + integrity", "per message", BALANCED_C),
-        ("RUNTIME AUTH", "HMAC-SHA256 / hash token",
-         "lightweight origin & replay check", "per message", TAN),
-    ]
-    x, w = 110, 600
-    top = 196; hh = 78; gap = 22
-    for i, (cap, prim, desc, freq, ac) in enumerate(layers):
-        y = top + i * (hh + gap)
-        rrect(x, y, w, hh, stroke=LINE, fill=CARD, r=12)
-        rect(x, y, 5, hh, fill=ac)
-        txt(x + 26, y + 16, cap, "Sans-B", 10.5, BROWN, "l", tracking=1.8)
-        txt(x + 26, y + 32, prim, "Mono-B", 18, BROWN_DK, "l")
-        txt(x + 26, y + 58, desc, "Sans", 12.5, TEXT_MUT, "l")
-        chip(x + w - 132, y + 25, 108, 28, freq, IVORY_2, BROWN, 10.5, "Sans-B", r=14)
-        if i < 2:
-            line(x + w/2, y + hh, x + w/2, y + hh + gap, TAN, 1.4)
-            poly([(x + w/2 - 5, y + hh + gap - 7), (x + w/2 + 5, y + hh + gap - 7),
-                  (x + w/2, y + hh + gap - 1)], fill=TAN)
-
-    # side note
-    txt(742, 240, "WHY HYBRID", "Sans-B", 10.5, BROWN, "l", tracking=1.6)
-    para(742, 266, 152,
-         "Costly asymmetric work stays <b>off</b> the per-packet path.",
-         size=13, color=TEXT_MUT, leading=20)
+    rrect(x, y1, w, h1, stroke=LINE, fill=CARD, r=12)
+    _clip_card(x, y1, w, h1, 12)
+    seg = h1 / 3                       # 3-colour edge = three runtime modes
+    for k, col in enumerate((HEAVY_C, BALANCED_C, LIGHT_C)):
+        rect(x, y1 + k * seg, 5, seg, fill=col)
+    c.restoreState()
+    txt(x + 22, y1 + 16, "DATA PLANE", "Sans-B", 9.5, BROWN, "l", tracking=1.6)
+    chip(x + w - 132, y1 + 18, 116, 24, "switches per tick", BROWN_DK, IVORY,
+         9, "Sans-B", r=12)
+    rows = [("Heavy", HEAVY_C, "AES-256-GCM + HMAC"),
+            ("Balanced", BALANCED_C, "AES-192-GCM + HMAC"),
+            ("Lightweight", LIGHT_C, "ChaCha20-Poly1305 + token")]
+    ry = y1 + 54
+    for nm, col, prim in rows:
+        circle(x + 26, ry, 5, fill=col,
+               stroke=(BROWN if col == LIGHT_C else None), lw=1)
+        txt(x + 40, ry - 6, nm, "Sans-B", 11.5, BROWN_DK, "l")
+        txt(x + 162, ry - 6, prim, "Mono", 11.5, TEXT_MUT, "l")
+        ry += 32
     c.showPage()
 
 # ============================================================================
@@ -516,7 +598,9 @@ def s_profiles():
     for i, (name, ac, fg, p1, p2, val, tag) in enumerate(profs):
         x = x0 + i * (cw + gap)
         rrect(x, top, cw, hh, stroke=LINE, fill=CARD, r=14)
+        _clip_card(x, top, cw, hh, 14)
         rect(x, top, cw, 6, fill=ac)
+        c.restoreState()
         chip(x + 22, top + 26, 110, 26, name, ac, fg, 11, "Sans-B", r=13)
         txt(x + 24, top + 70, p1, "Mono-B", 14.5, BROWN_DK, "l")
         txt(x + 24, top + 92, p2, "Mono", 12.5, TEXT_MUT, "l")
@@ -527,6 +611,8 @@ def s_profiles():
 
     txt(W/2, 452, "Lightweight does half the per-message crypto work of the authenticated profiles.",
         "Serif-I", 15, BROWN, "c")
+    txt(W/2, 480, "This metric counts bytes processed, so heavy and balanced come out equal; they differ in key length.",
+        "Sans-I", 11, TEXT_MUT, "c")
     c.showPage()
 
 # ============================================================================
@@ -579,7 +665,7 @@ def s_logic():
 
 def s_setup():
     bg()
-    header("Benchmark", "A constrained, reproducible testbed", 9)
+    header("Benchmark", "A constrained, reproducible testbed", 8)
 
     # tiny two-peer schematic
     py = 210
@@ -587,8 +673,8 @@ def s_setup():
         rrect(px - 70, py - 34, 140, 68, stroke=BROWN, fill=CARD, lw=1.6, r=12)
         ic_node(px, py - 6, 30, BROWN, lw=2)
         txt(px, py + 20, name, "Mono-B", 12, BROWN_DK, "c")
-    line(320, py, 580, py, TAN, 2)
-    poly([(580, py - 5), (580, py + 5), (588, py)], fill=TAN)
+    line(326, py, 566, py, TAN, 2)
+    poly([(566, py - 5), (566, py + 5), (574, py)], fill=TAN)
     chip(398, py - 17, 104, 34, "gRPC", IVORY_2, BROWN, 12, "Mono-B", r=16)
     txt(450, py + 52, "two containers · encrypted data path", "Sans-I", 12, TEXT_MUT, "c")
 
@@ -612,47 +698,44 @@ def s_setup():
 
 def s_results1():
     bg()
-    header("Results · I", "Adaptive spends protection where it is needed", 10)
+    header("Results · I", "Adaptive avoids both failure modes", 9)
+    txt(84, 116, "Every static profile fails one way; adaptive fails neither.",
+        "Serif-I", 15, BROWN, "l")
 
-    # LEFT: crypto work bars (frameless)
-    txt(96, 186, "CRYPTO WORK / MESSAGE", "Sans-B", 10.5, BROWN, "l", tracking=1.6)
-    txt(96, 202, "MiB · lower is cheaper", "Sans-I", 11, TEXT_MUT, "l")
-    bars = [("Heavy", 0.250, HEAVY_C), ("Balanced", 0.250, BALANCED_C),
-            ("Adaptive", 0.224, BROWN), ("Lightweight", 0.125, LIGHT_C)]
-    base = 408; maxh = 150; bw = 66; gapb = 30; x0 = 110; amax = 0.27
-    for i, (nm, v, col) in enumerate(bars):
-        x = x0 + i * (bw + gapb)
-        bh = maxh * v / amax
-        rrect(x, base - bh, bw, bh, fill=col, r=4)
-        txt(x + bw/2, base - bh - 20, f"{v:.3f}", "Serif-B", 15, BROWN_DK, "c")
-        txt(x + bw/2, base + 8, nm, "Sans", 10.5, TEXT_MUT, "c")
-    line(96, base, 470, base, LINE, 1.4)
+    # failure-mode scorecard
+    mx = 110                                  # profile-name column
+    cu, co, cc = 462, 650, 818                # under / over / cost column centres
+    hy = 198
+    txt(mx, hy, "PROFILE", "Sans-B", 10, TEXT_MUT, "l", tracking=1.4)
+    txt(cu, hy, "UNDER-PROTECTS", "Sans-B", 10, BROWN, "c", tracking=1.2)
+    txt(co, hy, "OVER-PROTECTS", "Sans-B", 10, BROWN, "c", tracking=1.2)
+    txt(cc, hy, "PROTECTION COST", "Sans-B", 10, BROWN, "c", tracking=1.2)
+    txt(cc, hy + 14, "vs. always-heavy", "Sans-I", 8.5, TEXT_MUT, "c")
+    line(90, hy + 28, 884, hy + 28, LINE, 1.2)
 
-    # RIGHT: policy fit stacked bars
-    txt(540, 186, "POLICY FIT OVER THE 60-s SCHEDULE", "Sans-B", 10.5, BROWN, "l", tracking=1.4)
-    txt(540, 202, "share of time at the right protection level", "Sans-I", 11, TEXT_MUT, "l")
-    rows = [("Adaptive", 100, 0, 0), ("Always heavy", 40, 60, 0),
-            ("Always balanced", 60, 0, 40), ("Always light", 20, 0, 80)]
-    MATCH, OVER, UNDER = GOOD_C, TAN, HEAVY_C
-    bx = 660; bw2 = 234; y = 230
-    for nm, m, o, u in rows:
-        txt(540, y + 5, nm, "Sans", 12, BROWN_DK, "l")
-        xoff = bx
-        for val, col in [(m, MATCH), (o, OVER), (u, UNDER)]:
-            if val:
-                rect(xoff, y, bw2 * val/100, 20, fill=col); xoff += bw2*val/100
-        y += 40
-    # legend
-    lx = 660
-    for nm, col in [("matched", MATCH), ("over", OVER), ("under", UNDER)]:
-        rrect(lx, 396, 11, 11, fill=col, r=2)
-        txt(lx + 16, 396, nm, "Sans", 10, TEXT_MUT, "l")
-        lx += 30 + len(nm) * 6
+    rows = [
+        ("Always-heavy",    ("never", GOOD_C), ("60% of run", WARN_C), "100%"),
+        ("Always-balanced", ("40% of run", WARN_C), ("20% of run", WARN_C), "67%"),
+        ("Always-light",    ("80% of run", WARN_C), ("never", GOOD_C), "33%"),
+        ("Adaptive",        ("never", GOOD_C), ("never", GOOD_C), "73%"),
+    ]
+    ry, rh = 262, 50
+    for i, (nm, (ut, uc), (ot, oc), cost) in enumerate(rows):
+        y = ry + i * rh
+        adaptive = (i == len(rows) - 1)
+        if adaptive:
+            rrect(90, y - 25, 794, 48, fill=CARD, stroke=LINE, r=10)
+        txt(mx, y - 8, nm, "Serif-B" if adaptive else "Serif", 16, BROWN_DK, "l")
+        txt(cu, y - 8, ut, "Sans-B", 13, uc, "c")
+        txt(co, y - 8, ot, "Sans-B", 13, oc, "c")
+        txt(cc, y - 8, cost, "Serif-B", 16, BROWN_DK, "c")
 
-    # hero takeaway — lead with the definitional (hard-to-contest) claim
-    txt(540, 422, "100%", "Serif-B", 34, BROWN_DK, "l")
-    txt(642, 418, "of the run at the right level", "Sans-B", 13, BROWN_DK, "l")
-    txt(642, 440, "−26.7% tier-work vs. always-heavy", "Sans", 11.5, TEXT_MUT, "l")
+    txt(W/2, 466,
+        "Only adaptive is never wrong either way — at 27% less protection work than always-heavy.",
+        "Serif-I", 14.5, BROWN, "c")
+    txt(W/2, 490,
+        "And the cost tracks the mission — a calmer schedule trends toward lightweight's cost, still escalating when it matters.",
+        "Sans-I", 11, TEXT_MUT, "c")
     c.showPage()
 
 # ============================================================================
@@ -661,7 +744,7 @@ def s_results1():
 
 def s_results2():
     bg()
-    header("Results · II", "Under a tight CPU cap, transport dominates", 11)
+    header("Results · II", "Under a tight CPU cap, transport dominates", 10)
 
     # LEFT: delivered vs offered
     txt(96, 186, "DELIVERED vs OFFERED RATE", "Sans-B", 10.5, BROWN, "l", tracking=1.6)
@@ -700,9 +783,9 @@ def s_results2():
         txt(barx + barw + 12, y + 3, lab, "Sans-B", 11, TEXT_MUT, "l")
         y += 44
 
-    txt(540, 392, "It's CPU-bound,", "Serif-B", 20, BROWN_DK, "l")
-    txt(540, 416, "not a crypto-design limit.", "Serif-I", 18, BROWN, "l")
-    txt(96, 452, "Near saturation the whole pipeline converges — the profile gap shows in crypto work, not latency.",
+    txt(540, 392, "The ceiling is CPU.", "Serif-B", 20, BROWN_DK, "l")
+    txt(540, 416, "The crypto design keeps up.", "Serif-I", 18, BROWN, "l")
+    txt(96, 452, "Near saturation the pipeline converges; the profile difference shows up in crypto work and policy fit.",
         "Sans-I", 12.5, TEXT_MUT, "l")
     c.showPage()
 
@@ -714,7 +797,7 @@ def s_conclusion():
     bg(BROWN_DK)
     rect(66, 50, 4, 58, fill=TAN)
     txt(84, 54, "CONCLUSION", "Sans-B", 11, TAN, "l", tracking=1.6)
-    txt(83, 72, "Adaptive crypto — measured, not just proposed", "Serif-B", 27, IVORY, "l")
+    txt(83, 72, "Adaptive crypto, built and measured", "Serif-B", 27, IVORY, "l")
 
     items = [("Formalised", "swarm graph + F : S(t) → P"),
              ("Built", "four modes incl. adaptive switching"),
@@ -755,10 +838,10 @@ def s_limitations():
     txt(894, 508, "backup — not part of the 10-min talk", "Sans-I", 9.5, TEXT_MUT, "r")
 
     items = [
-        ("Pairwise, not a swarm",
+        ("Pairwise prototype",
          "two peers on the measured path; multi-hop & churn are out of scope"),
-        ("Host, not hardware",
-         "Docker + gRPC containers — no embedded radios or microcontrollers"),
+        ("Host environment",
+         "Docker + gRPC containers; no embedded radios or microcontrollers"),
         ("Energy is a model proxy",
          "valid for relative comparison only, not battery-accurate"),
         ("Scripted inputs",
@@ -778,14 +861,16 @@ def s_limitations():
 
     line(66, 446, 894, 446, LINE_SOFT, 1.2)
     para(66, 462, 828,
-         "Every claim is scoped to a constrained pairwise prototype — "
-         "<b>validated, not extrapolated</b>.",
+         "Every claim covers exactly what the constrained pairwise prototype "
+         "<b>actually runs</b>.",
          size=14, color=BROWN, font="Sans-I", align=TA_CENTER)
     c.showPage()
 
 # ----------------------------------------------------------------------------
-for fn in (s_title, s_motivation, s_contrib, s_model, s_threat, s_blocks,
-           s_profiles, s_logic, s_setup, s_results1, s_results2, s_conclusion,
+# s_logic (Adaptation logic) is intentionally omitted from the rendered talk;
+# the function is kept above so the slide can be re-enabled later if needed.
+for fn in (s_title, s_motivation, s_literature, s_aim, s_model, s_security,
+           s_profiles, s_setup, s_results1, s_results2, s_conclusion,
            s_limitations):
     fn()
 c.save()
